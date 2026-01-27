@@ -159,7 +159,11 @@ def add_employee():
             username=form.username.data,
             name=form.name.data,
             email=form.email.data,
-            role='employee'
+            phone=form.phone.data,
+            address=form.address.data,
+            date_of_birth=form.date_of_birth.data,
+            hire_date=form.hire_date.data,
+            role=form.role.data
         )
         new_user.set_password(form.password.data)
 
@@ -171,7 +175,10 @@ def add_employee():
             user_id=new_user.id,
             basic_salary=form.basic_salary.data,
             is_hourly=form.is_hourly.data,
-            hourly_rate=form.hourly_rate.data if form.is_hourly.data else None
+            hourly_rate=form.hourly_rate.data if form.is_hourly.data else None,
+            overtime_rate=form.overtime_rate.data,
+            bank_account=form.bank_account.data,
+            bank_name=form.bank_name.data
         )
         db.session.add(details)
         db.session.commit()
