@@ -8,13 +8,14 @@ from datetime import datetime, date, time, timedelta
 import calendar
 import json
 import urllib.parse
+import os
 
 # Import models
 from models import db, User, EmployeeDetails, Attendance, Department, Leave, PayrollRecord, AuditLog, Advance
 from database_config import get_database_uri
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -847,4 +848,5 @@ if __name__ == '__main__':
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-    app.run(debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
