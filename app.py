@@ -579,7 +579,7 @@ def generate_payroll():
         pay_period_end = form.pay_period_end.data
 
         # Check if payroll already exists for this period
-        existing_payroll = PayrollRecord.query.filter_by(
+        existing_payroll = MonthlyPayout.query.filter_by(
             pay_period_start=pay_period_start,
             pay_period_end=pay_period_end
         ).first()
@@ -622,7 +622,7 @@ def generate_payroll():
             # Recalculate net salary after applying advance deductions
             net_salary = salary_calc['gross_salary'] - advance_deductions
 
-            PayrollRecord.create(
+            MonthlyPayout.create(
                 user_id=emp.id,
                 pay_period_start=pay_period_start,
                 pay_period_end=pay_period_end,
@@ -647,7 +647,7 @@ def payroll_report_new():
     if not user.is_admin():
         return redirect(url_for('employee_dashboard'))
 
-    payroll_records = PayrollRecord.query.order_by(PayrollRecord.created_at.desc()).all()
+    payroll_records = MonthlyPayout.query.order_by(MonthlyPayout.created_at.desc()).all()
     return render_template('payroll.html', payrolls=payroll_records)
 
 @app.route('/admin/payroll/view/<int:payroll_id>')
@@ -658,7 +658,7 @@ def view_payroll(payroll_id):
     if not user.is_admin():
         return redirect(url_for('employee_dashboard'))
 
-    payroll = PayrollRecord.query.get_or_404(payroll_id)
+    payroll = MonthlyPayout.query.get_or_404(payroll_id)
     return render_template('view_payroll.html', payroll=payroll)
 
 @app.route('/admin/payroll/mark_paid/<int:payroll_id>', methods=['POST'])
@@ -669,7 +669,7 @@ def mark_payroll_paid(payroll_id):
     if not user.is_admin():
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
-    payroll = PayrollRecord.query.get_or_404(payroll_id)
+    payroll = MonthlyPayout.query.get_or_404(payroll_id)
     payroll.status = 'paid'
     payroll.payment_date = date.today()
     payroll.save()
@@ -828,9 +828,9 @@ def get_dashboard_stats():
     # Count payroll records generated this month
     current_month = datetime.now().replace(day=1)
     next_month = (current_month + timedelta(days=32)).replace(day=1)
-    current_month_payroll = PayrollRecord.query.filter(
-        PayrollRecord.created_at >= current_month,
-        PayrollRecord.created_at < next_month
+    current_month_payroll = MonthlyPayout.query.filter(
+        MonthlyPayout.created_at >= current_month,
+        MonthlyPayout.created_at < next_month
     ).count()
 
     return jsonify({

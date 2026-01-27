@@ -95,7 +95,7 @@ class User(db.Model, CRUDMixin):
     # Relationships
 
     attendances = db.relationship('Attendance', backref='user', lazy=True, foreign_keys='Attendance.user_id')
-    payroll_records = db.relationship('PayrollRecord', backref='user', lazy=True, foreign_keys='PayrollRecord.user_id')
+    payroll_records = db.relationship('MonthlyPayout', backref='user', lazy=True, foreign_keys='MonthlyPayout.user_id')
     leaves = db.relationship('Leave', backref='user', lazy=True, foreign_keys='Leave.user_id')
     advances = db.relationship('Advance', lazy=True, foreign_keys='Advance.user_id')
 
@@ -217,7 +217,7 @@ class MonthlyPayout(db.Model, CRUDMixin):
     __table_args__ = (db.UniqueConstraint('user_id', 'pay_period_start', 'pay_period_end', name='unique_user_pay_period'),)
 
     def __repr__(self):
-        return f'<PayrollRecord user_id={self.user_id} {self.pay_period_start}-{self.pay_period_end} net={self.net_salary}>'
+        return f'<MonthlyPayout user_id={self.user_id} {self.pay_period_start}-{self.pay_period_end} net={self.net_salary}>'
 
 class AuditLog(db.Model, CRUDMixin):
     """Audit log for tracking changes"""

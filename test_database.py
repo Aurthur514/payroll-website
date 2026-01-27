@@ -3,7 +3,7 @@
 Test script to verify database connectivity and basic operations
 """
 
-from app import app, db, User, Department, EmployeeDetails, Attendance, Leave, PayrollRecord
+from app import app, db, User, Department, EmployeeDetails, Attendance, Leave, MonthlyPayout
 from database_config import DATABASE_TYPE, get_database_uri
 import traceback
 
@@ -89,7 +89,7 @@ def test_database_connection():
                 ('EmployeeDetails', EmployeeDetails),
                 ('Attendance', Attendance),
                 ('Leaves', Leave),
-                ('PayrollRecords', PayrollRecord)
+                ('PayrollRecords', MonthlyPayout)
             ]
 
             for name, model in tables:
