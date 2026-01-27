@@ -9,9 +9,10 @@ import calendar
 import json
 import urllib.parse
 import os
+from functools import wraps
 
 # Import models
-from models import db, User, EmployeeDetails, Attendance, Department, Leave, PayrollRecord, AuditLog, Advance
+from models import db, User, EmployeeDetails, Attendance, Department, Leave, MonthlyPayout, AuditLog, Advance
 from database_config import get_database_uri
 
 app = Flask(__name__)
@@ -20,6 +21,30 @@ app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        user = User.query.get(session['user_id'])
+        if user.role != 'admin':
+            flash('Access denied. Admin privileges required.', 'error')
+            return redirect(url_for('employee_dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def manager_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        user = User.query.get(session['user_id'])
+        if user.role not in ['admin', 'manager']:
+            flash('Access denied. Manager privileges required.', 'error')
+            return redirect(url_for('employee_dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.context_processor
 def inject_current_user():
@@ -82,14 +107,10 @@ class PayrollForm(FlaskForm):
     submit = SubmitField('Generate Payroll')
 
 class AdvanceForm(FlaskForm):
-    amount = FloatField('Advance Amount', validators=[DataRequired()])
+    total_amount = FloatField('Advance Amount', validators=[DataRequired()])
+    monthly_deduction = FloatField('Monthly Deduction Amount', validators=[DataRequired()])
     description = StringField('Description', validators=[Optional()])
     advance_date = DateField('Advance Date', validators=[Optional()])
-    deduction_type = SelectField('Deduction Type', choices=[
-        ('installments', 'Monthly Installments'),
-        ('single', 'Single Deduction')
-    ], validators=[DataRequired()])
-    installment_amount = FloatField('Monthly Installment Amount', validators=[Optional()])
     submit = SubmitField('Grant Advance')
 
 # Routes
@@ -138,79 +159,61 @@ def admin_dashboard():
     return render_template('admin_dashboard.html', employees=employees)
 
 @app.route('/admin/add_employee', methods=['GET', 'POST'])
+@admin_required
 def add_employee():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user = User.query.get(session['user_id'])
-    if user.role != 'admin':
-        return redirect(url_for('employee_dashboard'))
-
     form = EmployeeForm()
     if form.validate_on_submit():
-        # Check if username or email already exists
-        existing_user = User.query.filter(
-            (User.username == form.username.data) | (User.email == form.email.data)
-        ).first()
-        if existing_user:
-            flash('Username or email already exists.', 'error')
+        try:
+            # Check if username or email already exists
+            existing_user = User.query.filter(
+                (User.username == form.username.data) | (User.email == form.email.data)
+            ).first()
+            if existing_user:
+                flash('Username or email already exists.', 'error')
+                return render_template('add_employee.html', form=form)
+
+            new_user = User(
+                username=form.username.data,
+                name=form.name.data,
+                email=form.email.data,
+                phone=form.phone.data,
+                address=form.address.data,
+                date_of_birth=form.date_of_birth.data,
+                hire_date=form.hire_date.data,
+                role=form.role.data,
+                daily_rate=form.basic_salary.data  # Assuming basic_salary is daily_rate
+            )
+            new_user.set_password(form.password.data)
+
+            db.session.add(new_user)
+            db.session.commit()
+
+            flash('Employee added successfully.', 'success')
+            return redirect(url_for('admin_dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding employee: {str(e)}', 'error')
             return render_template('add_employee.html', form=form)
-
-        new_user = User(
-            username=form.username.data,
-            name=form.name.data,
-            email=form.email.data,
-            phone=form.phone.data,
-            address=form.address.data,
-            date_of_birth=form.date_of_birth.data,
-            hire_date=form.hire_date.data,
-            role=form.role.data
-        )
-        new_user.set_password(form.password.data)
-
-        db.session.add(new_user)
-        db.session.commit()
-
-        # Add employee details
-        details = EmployeeDetails(
-            user_id=new_user.id,
-            basic_salary=form.basic_salary.data,
-            is_hourly=form.is_hourly.data,
-            hourly_rate=form.hourly_rate.data if form.is_hourly.data else None,
-            overtime_rate=form.overtime_rate.data,
-            bank_account=form.bank_account.data,
-            bank_name=form.bank_name.data
-        )
-        db.session.add(details)
-        db.session.commit()
-
-        flash('Employee added successfully.', 'success')
-        return redirect(url_for('admin_dashboard'))
 
     return render_template('add_employee.html', form=form)
 
 @app.route('/admin/edit_employee/<int:employee_id>', methods=['GET', 'POST'])
+@admin_required
 def edit_employee(employee_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user = User.query.get(session['user_id'])
-    if user.role != 'admin':
-        return redirect(url_for('employee_dashboard'))
-
     employee = User.query.get_or_404(employee_id)
-    details = employee.details[0] if employee.details else None
 
     if request.method == 'POST':
         employee.name = request.form['name']
         employee.email = request.form['email']
-        details.basic_salary = float(request.form['basic_salary'])
-        details.is_hourly = 'is_hourly' in request.form
-        details.hourly_rate = float(request.form.get('hourly_rate', 0)) if details.is_hourly else None
+        employee.daily_rate = float(request.form['daily_rate'])
+        employee.phone = request.form.get('phone')
+        employee.address = request.form.get('address')
 
         db.session.commit()
         flash('Employee updated successfully.', 'success')
         return redirect(url_for('admin_dashboard'))
 
-    return render_template('edit_employee.html', employee=employee, details=details)
+    return render_template('edit_employee.html', employee=employee)
 
 @app.route('/admin/payroll_report')
 def payroll_report():
@@ -228,8 +231,7 @@ def payroll_report():
     report = []
 
     for emp in employees:
-        details = emp.details[0] if emp.details else None
-        if not details:
+        if not emp.daily_rate:
             continue
 
         # Get attendance for current month
@@ -240,18 +242,13 @@ def payroll_report():
         ).all()
 
         days_present = sum(1 for a in attendance_records if a.present)
-        total_hours = sum(a.hours_worked for a in attendance_records)
 
-        if details.is_hourly:
-            salary = total_hours * details.hourly_rate
-        else:
-            salary = details.basic_salary * (days_present / last_day)
+        salary = days_present * emp.daily_rate
 
         report.append({
             'employee': emp,
             'days_present': days_present,
             'total_days': last_day,
-            'total_hours': total_hours,
             'salary': round(salary, 2)
         })
 
@@ -286,21 +283,20 @@ def mark_attendance():
         return redirect(url_for('employee_dashboard'))
 
     form = AttendanceForm()
-    details = user.details[0] if user.details else None
 
     if form.validate_on_submit():
         new_attendance = Attendance(
             user_id=user.id,
             date=today,
             present=form.present.data,
-            hours_worked=form.hours_worked.data if details and details.is_hourly else 0.0
+            status='pending'  # Start as pending for approval
         )
         db.session.add(new_attendance)
         db.session.commit()
-        flash('Attendance marked successfully.', 'success')
+        flash('Attendance marked successfully. Pending approval.', 'success')
         return redirect(url_for('employee_dashboard'))
 
-    return render_template('mark_attendance.html', form=form, details=details)
+    return render_template('mark_attendance.html', form=form)
 
 # CRUD Routes for Departments
 @app.route('/admin/departments')
@@ -693,31 +689,30 @@ def manage_advances():
     return render_template('manage_advances.html', advances=advances)
 
 @app.route('/admin/advance/create/<int:employee_id>', methods=['GET', 'POST'])
+@admin_required
 def create_advance(employee_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    user = User.query.get(session['user_id'])
-    if not user.is_admin():
-        return redirect(url_for('employee_dashboard'))
-
     employee = User.query.get_or_404(employee_id)
     form = AdvanceForm()
 
     if form.validate_on_submit():
-        advance = Advance(
-            employee_id=employee_id,
-            amount=form.amount.data,
-            description=form.description.data,
-            advance_date=form.advance_date.data or date.today(),
-            deduction_type=form.deduction_type.data,
-            installment_amount=form.installment_amount.data if form.deduction_type.data == 'installments' else None,
-            remaining_balance=form.amount.data
-        )
-        db.session.add(advance)
-        db.session.commit()
+        try:
+            advance = Advance(
+                user_id=employee_id,
+                total_amount=form.total_amount.data,
+                monthly_deduction=form.monthly_deduction.data,
+                remaining_balance=form.total_amount.data,
+                description=form.description.data,
+                advance_date=form.advance_date.data or date.today()
+            )
+            db.session.add(advance)
+            db.session.commit()
 
-        flash('Advance granted successfully.', 'success')
-        return redirect(url_for('manage_advances'))
+            flash('Advance granted successfully.', 'success')
+            return redirect(url_for('manage_advances'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error granting advance: {str(e)}', 'error')
+            return render_template('create_advance.html', form=form, employee=employee)
 
     return render_template('create_advance.html', form=form, employee=employee)
 

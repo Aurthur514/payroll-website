@@ -87,12 +87,13 @@ class User(db.Model, CRUDMixin):
     address = db.Column(db.Text, nullable=True)
     date_of_birth = db.Column(db.Date, nullable=True)
     hire_date = db.Column(db.Date, default=date.today)
+    daily_rate = db.Column(db.Float, nullable=True, default=0.0)  # Daily rate for salary calculation
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    employee_details = db.relationship('EmployeeDetails', backref='user', lazy=True, uselist=False, foreign_keys='EmployeeDetails.user_id')
+
     attendances = db.relationship('Attendance', backref='user', lazy=True, foreign_keys='Attendance.user_id')
     payroll_records = db.relationship('PayrollRecord', backref='user', lazy=True, foreign_keys='PayrollRecord.user_id')
     leaves = db.relationship('Leave', backref='user', lazy=True, foreign_keys='Leave.user_id')
@@ -159,6 +160,9 @@ class Attendance(db.Model, CRUDMixin):
     date = db.Column(db.Date, nullable=False, index=True)
     present = db.Column(db.Boolean, default=False)
     hours_worked = db.Column(db.Float, default=0.0)
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'approved', 'rejected'
+    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    approved_at = db.Column(db.DateTime, nullable=True)
     check_in_time = db.Column(db.Time, nullable=True)
     check_out_time = db.Column(db.Time, nullable=True)
     notes = db.Column(db.Text, nullable=True)
@@ -193,21 +197,19 @@ class Leave(db.Model, CRUDMixin):
     def __repr__(self):
         return f'<Leave user_id={self.user_id} type={self.leave_type} status={self.status}>'
 
-class PayrollRecord(db.Model, CRUDMixin):
-    """Payroll calculation records"""
-    __tablename__ = 'payroll_record'
+class MonthlyPayout(db.Model, CRUDMixin):
+    """Monthly payout records"""
+    __tablename__ = 'monthly_payout'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     pay_period_start = db.Column(db.Date, nullable=False)
     pay_period_end = db.Column(db.Date, nullable=False)
-    days_present = db.Column(db.Integer, default=0)
-    total_days = db.Column(db.Integer, nullable=False)
-    hours_worked = db.Column(db.Float, default=0.0)
-    gross_salary = db.Column(db.Float, nullable=False)
-    deductions = db.Column(db.Float, default=0.0)
-    net_salary = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='calculated')  # 'calculated', 'paid', 'pending'
+    days_worked = db.Column(db.Integer, default=0)
+    gross_earnings = db.Column(db.Float, nullable=False)
+    advance_deduction = db.Column(db.Float, default=0.0)
+    final_payout = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), default='calculated')  # 'calculated', 'paid'
     payment_date = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -243,41 +245,27 @@ class Advance(db.Model, CRUDMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
+    total_amount = db.Column(db.Float, nullable=False)  # Principal amount
+    monthly_deduction = db.Column(db.Float, nullable=False)  # Fixed monthly deduction
+    remaining_balance = db.Column(db.Float, nullable=False)  # Amount still to be deducted
     description = db.Column(db.String(200), nullable=True)
     advance_date = db.Column(db.Date, default=date.today)
-    deduction_type = db.Column(db.String(20), default='installments')  # 'installments' or 'single'
-    installment_amount = db.Column(db.Float, nullable=True)  # Monthly deduction amount
-    total_installments = db.Column(db.Integer, nullable=True)  # Number of installments
-    paid_installments = db.Column(db.Integer, default=0)  # Number of installments paid
-    remaining_balance = db.Column(db.Float, nullable=False)  # Amount still to be deducted
     status = db.Column(db.String(20), default='active')  # 'active', 'completed', 'cancelled'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = db.relationship('User', overlaps="advances")
 
-    def calculate_monthly_deduction(self):
-        """Calculate how much to deduct this month"""
-        if self.deduction_type == 'single':
-            return min(self.remaining_balance, self.amount)  # Deduct remaining balance
-        elif self.deduction_type == 'installments' and self.installment_amount:
-            return min(self.installment_amount, self.remaining_balance)
+    def apply_monthly_deduction(self):
+        """Apply monthly deduction"""
+        if self.remaining_balance > 0:
+            deduction = min(self.monthly_deduction, self.remaining_balance)
+            self.remaining_balance -= deduction
+            if self.remaining_balance <= 0:
+                self.status = 'completed'
+            self.save()
+            return deduction
         return 0.0
-
-    def apply_deduction(self, amount):
-        """Apply a deduction payment"""
-        if amount > self.remaining_balance:
-            amount = self.remaining_balance
-
-        self.remaining_balance -= amount
-        self.paid_installments += 1
-
-        if self.remaining_balance <= 0:
-            self.status = 'completed'
-
-        self.save()
-        return amount
 
     def __repr__(self):
         return f'<Advance user_id={self.user_id} amount={self.amount} remaining={self.remaining_balance}>'
