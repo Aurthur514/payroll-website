@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Dashboard - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Welcome, {{ current_user.name }}!</h2>
+
+        <div class="row">
+            <!-- Quick Stats -->
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Today's Status</h5>
+                        <p class="card-text">
+                            {% if today_attendance %}
+                                <span class="badge bg-success">Present</span>
+                            {% else %}
+                                <span class="badge bg-warning">Not Marked</span>
+                            {% endif %}
+                        </p>
+                        <button class="btn btn-primary btn-sm" onclick="markAttendance()">Mark Attendance</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending Leaves</h5>
+                        <p class="card-text">{{ pending_leaves_count }}</p>
+                        <a href="{{ url_for('my_leaves') }}" class="btn btn-info btn-sm">View Leaves</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">This Month's Salary</h5>
+                        <p class="card-text">${{ "%.2f"|format(current_user.basic_salary) }}</p>
+                        <a href="{{ url_for('my_payroll') }}" class="btn btn-success btn-sm">View Payroll</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Leave Balance</h5>
+                        <p class="card-text">{{ current_user.leave_balance }} days</p>
+                        <a href="{{ url_for('request_leave') }}" class="btn btn-warning btn-sm">Request Leave</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Recent Attendance</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_attendance %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Time In</th>
+                                            <th>Time Out</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for attendance in recent_attendance %}
+                                            <tr>
+                                                <td>{{ attendance.date.strftime('%Y-%m-%d') }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'success' if attendance.status == 'present' else 'danger' if attendance.status == 'absent' else 'warning' }}">
+                                                        {{ attendance.status.title() }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ attendance.time_in.strftime('%H:%M') if attendance.time_in else '-' }}</td>
+                                                <td>{{ attendance.time_out.strftime('%H:%M') if attendance.time_out else '-' }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No recent attendance records.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Recent Leave Requests</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_leaves %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Start Date</th>
+                                            <th>End Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for leave in recent_leaves %}
+                                            <tr>
+                                                <td>{{ leave.leave_type.title() }}</td>
+                                                <td>{{ leave.start_date.strftime('%Y-%m-%d') }}</td>
+                                                <td>{{ leave.end_date.strftime('%Y-%m-%d') }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'warning' if leave.status == 'pending' else 'success' if leave.status == 'approved' else 'danger' }}">
+                                                        {{ leave.status.title() }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No recent leave requests.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function markAttendance() {
+    if (confirm('Mark yourself as present for today?')) {
+        fetch('/employee/mark_attendance', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Attendance marked successfully!');
+                location.reload();
+            } else {
+                alert('Error marking attendance: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking attendance');
+        });
+    }
+}
+</script>
+{% endblock %}

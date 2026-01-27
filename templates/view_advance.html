@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Advance Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Advance Details</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Employee Information</h5>
+                            <p><strong>Name:</strong> {{ advance.employee.name }}</p>
+                            <p><strong>Email:</strong> {{ advance.employee.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Advance Information</h5>
+                            <p><strong>Amount:</strong> ${{ "%.2f"|format(advance.amount) }}</p>
+                            <p><strong>Remaining Balance:</strong> ${{ "%.2f"|format(advance.remaining_balance) }}</p>
+                            <p><strong>Advance Date:</strong> {{ advance.advance_date.strftime('%Y-%m-%d') }}</p>
+                            <p><strong>Deduction Type:</strong>
+                                {% if advance.deduction_type == 'installments' %}
+                                    Monthly Installments (${{ "%.2f"|format(advance.installment_amount) }}/month)
+                                {% else %}
+                                    Single Deduction
+                                {% endif %}
+                            </p>
+                            {% if advance.description %}
+                            <p><strong>Description:</strong> {{ advance.description }}</p>
+                            {% endif %}
+                            <p><strong>Status:</strong>
+                                {% if advance.remaining_balance <= 0 %}
+                                    <span class="badge badge-success">Completed</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Active</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if advance.deduction_type == 'installments' %}
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <h5>Deduction History</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Amount Deducted</th>
+                                            <th>Remaining Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- This would need to be implemented with deduction tracking -->
+                                        <tr>
+                                            <td colspan="3" class="text-muted">Deduction history will be shown here</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <a href="{{ url_for('manage_advances') }}" class="btn btn-secondary">Back to Advances</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

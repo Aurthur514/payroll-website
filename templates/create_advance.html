@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Grant Advance{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Grant Advance to {{ employee.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+
+                        <div class="form-group">
+                            {{ form.amount.label(class="form-label") }}
+                            {{ form.amount(class="form-control", placeholder="Enter advance amount") }}
+                            {% if form.amount.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.amount.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", placeholder="Optional description") }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.advance_date.label(class="form-label") }}
+                            {{ form.advance_date(class="form-control") }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.deduction_type.label(class="form-label") }}
+                            {{ form.deduction_type(class="form-control") }}
+                            {% if form.deduction_type.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.deduction_type.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group" id="installment_amount_group" style="display: none;">
+                            {{ form.installment_amount.label(class="form-label") }}
+                            {{ form.installment_amount(class="form-control", placeholder="Monthly installment amount") }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('manage_advances') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deductionTypeSelect = document.querySelector('#deduction_type');
+    const installmentGroup = document.querySelector('#installment_amount_group');
+
+    function toggleInstallmentField() {
+        if (deductionTypeSelect.value === 'installments') {
+            installmentGroup.style.display = 'block';
+        } else {
+            installmentGroup.style.display = 'none';
+        }
+    }
+
+    deductionTypeSelect.addEventListener('change', toggleInstallmentField);
+    toggleInstallmentField(); // Initial check
+});
+</script>
+{% endblock %}

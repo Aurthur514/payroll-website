@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}My Leave Requests - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>My Leave Requests</h2>
+
+        <div class="mb-3">
+            <a href="{{ url_for('request_leave') }}" class="btn btn-primary">Request New Leave</a>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Leave Balance:</strong> {{ current_user.leave_balance }} days remaining
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Leave Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Days</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Requested</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in leaves %}
+                                <tr>
+                                    <td>{{ leave.leave_type.title() }}</td>
+                                    <td>{{ leave.start_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ leave.end_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ leave.days_requested }}</td>
+                                    <td>{{ leave.reason or 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if leave.status == 'pending' else 'success' if leave.status == 'approved' else 'danger' }}">
+                                            {{ leave.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ leave.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if leave.status == 'pending' %}
+                                            <button class="btn btn-sm btn-danger cancel-leave" data-leave-id="{{ leave.id }}">Cancel</button>
+                                        {% else %}
+                                            <em>{{ leave.status.title() }}</em>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if not leaves %}
+                    <p class="text-muted text-center mt-3">No leave requests found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cancel leave request
+    document.querySelectorAll('.cancel-leave').forEach(button => {
+        button.addEventListener('click', function() {
+            const leaveId = this.getAttribute('data-leave-id');
+            if (confirm('Are you sure you want to cancel this leave request?')) {
+                fetch(`/employee/cancel_leave/${leaveId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error canceling leave: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error canceling leave');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

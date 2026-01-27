@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Payroll - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <h2>Generate Payroll</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.pay_period_start.label(class="form-label") }}
+                        {{ form.pay_period_start(class="form-control") }}
+                        {% if form.pay_period_start.errors %}
+                            <div class="text-danger">
+                                {% for error in form.pay_period_start.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.pay_period_end.label(class="form-label") }}
+                        {{ form.pay_period_end(class="form-control") }}
+                        {% if form.pay_period_end.errors %}
+                            <div class="text-danger">
+                                {% for error in form.pay_period_end.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Employees</label>
+                        <div class="border p-3" style="max-height: 300px; overflow-y: auto;">
+                            {% for employee in employees %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="selected_employees" value="{{ employee.id }}" id="employee_{{ employee.id }}">
+                                    <label class="form-check-label" for="employee_{{ employee.id }}">
+                                        {{ employee.name }} ({{ employee.employee_id }}) - {{ employee.department.name }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if not employees %}
+                            <p class="text-muted">No employees found.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-secondary" onclick="selectAll()">Select All</button>
+                        <button type="button" class="btn btn-secondary" onclick="deselectAll()">Deselect All</button>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Generate Payroll</button>
+                        <a href="{{ url_for('payroll_report_new') }}" class="btn btn-secondary mt-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function selectAll() {
+    const checkboxes = document.querySelectorAll('input[name="selected_employees"]');
+    checkboxes.forEach(checkbox => checkbox.checked = true);
+}
+
+function deselectAll() {
+    const checkboxes = document.querySelectorAll('input[name="selected_employees"]');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+}
+</script>
+{% endblock %}

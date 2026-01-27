@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll Details - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 offset-md-1">
+        <h2>My Payroll Details</h2>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>Payroll for {{ payroll.pay_period_start.strftime('%B %Y') }}</h5>
+                <small class="text-muted">Period: {{ payroll.pay_period_start.strftime('%Y-%m-%d') }} to {{ payroll.pay_period_end.strftime('%Y-%m-%d') }}</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Employee Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Name:</strong></td>
+                                <td>{{ payroll.employee.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Employee ID:</strong></td>
+                                <td>{{ payroll.employee.employee_id }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Department:</strong></td>
+                                <td>{{ payroll.employee.department.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Position:</strong></td>
+                                <td>{{ payroll.employee.position }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Payroll Summary</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Basic Salary:</strong></td>
+                                <td>${{ "%.2f"|format(payroll.basic_salary) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Allowances:</strong></td>
+                                <td>${{ "%.2f"|format(payroll.allowances) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deductions:</strong></td>
+                                <td>${{ "%.2f"|format(payroll.deductions) }}</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td><strong>Net Salary:</strong></td>
+                                <td><strong>${{ "%.2f"|format(payroll.net_salary) }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if payroll.status == 'paid' else 'warning' }}">
+                                        {{ payroll.status.title() }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                {% if payroll.allowances_breakdown %}
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6>Allowances Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for allowance in payroll.allowances_breakdown %}
+                                        <tr>
+                                            <td>{{ allowance.type }}</td>
+                                            <td>${{ "%.2f"|format(allowance.amount) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if payroll.deductions_breakdown %}
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6>Deductions Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for deduction in payroll.deductions_breakdown %}
+                                        <tr>
+                                            <td>{{ deduction.type }}</td>
+                                            <td>${{ "%.2f"|format(deduction.amount) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6>Attendance Summary</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Working Days:</strong></td>
+                                <td>{{ payroll.working_days }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Present Days:</strong></td>
+                                <td>{{ payroll.present_days }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Absent Days:</strong></td>
+                                <td>{{ payroll.absent_days }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Leave Days:</strong></td>
+                                <td>{{ payroll.leave_days }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('my_payroll') }}" class="btn btn-secondary">Back to My Payroll</a>
+                <button onclick="window.print()" class="btn btn-primary">Print Payslip</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

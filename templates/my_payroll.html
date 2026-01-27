@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}My Payroll - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>My Payroll Records</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Basic Salary</th>
+                                <th>Allowances</th>
+                                <th>Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Status</th>
+                                <th>Generated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payroll in payrolls %}
+                                <tr>
+                                    <td>{{ payroll.pay_period_start.strftime('%Y-%m-%d') }} to {{ payroll.pay_period_end.strftime('%Y-%m-%d') }}</td>
+                                    <td>${{ "%.2f"|format(payroll.basic_salary) }}</td>
+                                    <td>${{ "%.2f"|format(payroll.allowances) }}</td>
+                                    <td>${{ "%.2f"|format(payroll.deductions) }}</td>
+                                    <td><strong>${{ "%.2f"|format(payroll.net_salary) }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if payroll.status == 'paid' else 'warning' }}">
+                                            {{ payroll.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ payroll.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_my_payroll', payroll_id=payroll.id) }}" class="btn btn-sm btn-info">View Details</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if not payrolls %}
+                    <p class="text-muted text-center mt-3">No payroll records found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

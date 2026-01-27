@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll Management - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Payroll Records</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-3">
+                    <a href="{{ url_for('generate_payroll') }}" class="btn btn-primary">Generate New Payroll</a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Period</th>
+                                <th>Basic Salary</th>
+                                <th>Allowances</th>
+                                <th>Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Status</th>
+                                <th>Generated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payroll in payrolls %}
+                                <tr>
+                                    <td>{{ payroll.user.name }}</td>
+                                    <td>{{ payroll.pay_period_start.strftime('%Y-%m-%d') }} to {{ payroll.pay_period_end.strftime('%Y-%m-%d') }}</td>
+                                    <td>${{ "%.2f"|format(payroll.basic_salary) }}</td>
+                                    <td>${{ "%.2f"|format(payroll.allowances) }}</td>
+                                    <td>${{ "%.2f"|format(payroll.deductions) }}</td>
+                                    <td><strong>${{ "%.2f"|format(payroll.net_salary) }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if payroll.status == 'paid' else 'warning' }}">
+                                            {{ payroll.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ payroll.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('view_payroll', payroll_id=payroll.id) }}" class="btn btn-sm btn-info">View</a>
+                                        {% if payroll.status == 'pending' %}
+                                            <button class="btn btn-sm btn-success mark-paid" data-payroll-id="{{ payroll.id }}">Mark Paid</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mark payroll as paid
+    document.querySelectorAll('.mark-paid').forEach(button => {
+        button.addEventListener('click', function() {
+            const payrollId = this.getAttribute('data-payroll-id');
+            if (confirm('Are you sure you want to mark this payroll as paid?')) {
+                fetch(`/admin/payroll/mark_paid/${payrollId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error marking payroll as paid: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error marking payroll as paid');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

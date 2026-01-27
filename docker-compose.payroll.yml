@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  payroll-app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-your-production-secret-key-change-this}
+      - SQL_SERVER=${SQL_SERVER:-mssql}
+      - SQL_DATABASE=${SQL_DATABASE:-payroll_db}
+      - SQL_USER=${SQL_USER:-sa}
+      - SQL_PASSWORD=${SQL_PASSWORD:-YourPassword123!}
+    depends_on:
+      - mssql
+    networks:
+      - payroll-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SQL_PASSWORD:-YourPassword123!}
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - payroll-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ${SQL_PASSWORD:-YourPassword123!} -Q 'SELECT 1'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  mssql_data:
+
+networks:
+  payroll-network:
+    driver: bridge

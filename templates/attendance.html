@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Attendance - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Attendance Management - {{ today.strftime('%B %d, %Y') }}</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Present</th>
+                                <th>Hours Worked</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in employees %}
+                                <tr data-employee-id="{{ employee.id }}">
+                                    <td>{{ employee.name }}</td>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input attendance-present"
+                                               data-employee-id="{{ employee.id }}"
+                                               {% if attendance_dict[employee.id|string] and attendance_dict[employee.id|string].present %}checked{% endif %}>
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.5" min="0" max="24" class="form-control attendance-hours"
+                                               data-employee-id="{{ employee.id }}"
+                                               value="{{ attendance_dict[employee.id|string].hours_worked if attendance_dict[employee.id|string] else 0 }}">
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control attendance-checkin"
+                                               data-employee-id="{{ employee.id }}"
+                                               value="{{ attendance_dict[employee.id|string].check_in_time.strftime('%H:%M') if attendance_dict[employee.id|string] and attendance_dict[employee.id|string].check_in_time else '' }}">
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control attendance-checkout"
+                                               data-employee-id="{{ employee.id }}"
+                                               value="{{ attendance_dict[employee.id|string].check_out_time.strftime('%H:%M') if attendance_dict[employee.id|string] and attendance_dict[employee.id|string].check_out_time else '' }}">
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control attendance-notes"
+                                               data-employee-id="{{ employee.id }}"
+                                               value="{{ attendance_dict[employee.id|string].notes if attendance_dict[employee.id|string] else '' }}">
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary save-attendance"
+                                                data-employee-id="{{ employee.id }}">Save</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Save attendance when button is clicked
+    document.querySelectorAll('.save-attendance').forEach(button => {
+        button.addEventListener('click', function() {
+            const employeeId = this.getAttribute('data-employee-id');
+            const row = document.querySelector(`tr[data-employee-id="${employeeId}"]`);
+
+            const present = row.querySelector('.attendance-present').checked;
+            const hoursWorked = parseFloat(row.querySelector('.attendance-hours').value) || 0;
+            const checkIn = row.querySelector('.attendance-checkin').value;
+            const checkOut = row.querySelector('.attendance-checkout').value;
+            const notes = row.querySelector('.attendance-notes').value;
+
+            const data = {
+                date: '{{ today.isoformat() }}',
+                present: present,
+                hours_worked: hoursWorked,
+                check_in_time: checkIn,
+                check_out_time: checkOut,
+                notes: notes
+            };
+
+            fetch(`/admin/attendance/${employeeId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Attendance saved successfully!');
+                } else {
+                    alert('Error saving attendance: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving attendance');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

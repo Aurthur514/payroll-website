@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  trading-bot:
+    build: .
+    container_name: coinswitch-trading-bot
+    environment:
+      - COINSWITCH_API_KEY=${COINSWITCH_API_KEY}
+      - COINSWITCH_API_SECRET=${COINSWITCH_API_SECRET}
+    volumes:
+      - ./trading_bot.log:/app/trading_bot.log
+      - ./trading_model.pkl:/app/trading_model.pkl
+    restart: unless-stopped
+    # Uncomment the following lines if you want to run in live mode
+    # command: ["python", "main.py"]
+    # For testing, you can override the command
+    command: ["python", "-c", "print('Bot container started. Set LIVE_TRADING=True in config.py for live trading.')"]

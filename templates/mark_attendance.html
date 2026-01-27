@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Mark Attendance - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Mark Today's Attendance</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.present(class="form-check-input") }}
+                            {{ form.present.label(class="form-check-label") }}
+                        </div>
+                    </div>
+                    {% if details and details.is_hourly %}
+                    <div class="mb-3">
+                        {{ form.hours_worked.label(class="form-label") }}
+                        {{ form.hours_worked(class="form-control", step="0.5", min="0", max="24") }}
+                        {% if form.hours_worked.errors %}
+                            {% for error in form.hours_worked.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('employee_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

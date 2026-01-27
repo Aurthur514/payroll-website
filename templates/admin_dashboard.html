@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Admin Dashboard</h2>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Employees</h5>
+                        <h3 id="total-employees">-</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Present Today</h5>
+                        <h3 id="present-today">-</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending Leaves</h5>
+                        <h3 id="pending-leaves">-</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Payroll Status</h5>
+                        <h6 id="payroll-status">-</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Actions -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Management Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <a href="{{ url_for('manage_employees') }}" class="btn btn-primary btn-lg w-100 mb-2">
+                                    <i class="fas fa-users"></i> Manage Employees
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('manage_departments') }}" class="btn btn-secondary btn-lg w-100 mb-2">
+                                    <i class="fas fa-building"></i> Manage Departments
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('manage_advances') }}" class="btn btn-info btn-lg w-100 mb-2">
+                                    <i class="fas fa-money-bill-wave"></i> Manage Advances
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('manage_attendance') }}" class="btn btn-success btn-lg w-100 mb-2">
+                                    <i class="fas fa-calendar-check"></i> Manage Attendance
+                                </a>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <a href="{{ url_for('manage_leaves') }}" class="btn btn-warning btn-lg w-100 mb-2">
+                                    <i class="fas fa-calendar-times"></i> Manage Leaves
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{{ url_for('generate_payroll') }}" class="btn btn-danger btn-lg w-100 mb-2">
+                                    <i class="fas fa-calculator"></i> Generate Payroll
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{{ url_for('payroll_report') }}" class="btn btn-dark btn-lg w-100 mb-2">
+                                    <i class="fas fa-file-invoice-dollar"></i> View Payroll Report
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Recent Leave Requests</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for leave in recent_leaves %}
+                        <div class="mb-2">
+                            <strong>{{ leave.user.name }}</strong> - {{ leave.leave_type }} ({{ leave.status }})
+                            <br><small>{{ leave.created_at.strftime('%Y-%m-%d') }}</small>
+                        </div>
+                        {% endfor %}
+                        <a href="{{ url_for('manage_leaves') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Today's Attendance</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Present:</strong> <span id="present-count">-</span></p>
+                        <p><strong>Absent:</strong> <span id="absent-count">-</span></p>
+                        <a href="{{ url_for('manage_attendance') }}" class="btn btn-sm btn-outline-success">Manage Attendance</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load dashboard stats
+    fetch('/api/dashboard/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-employees').textContent = data.total_employees;
+            document.getElementById('present-today').textContent = data.present_today;
+            document.getElementById('pending-leaves').textContent = data.pending_leaves;
+            document.getElementById('payroll-status').textContent = data.payroll_generated ? 'Generated' : 'Pending';
+        })
+        .catch(error => console.error('Error loading stats:', error));
+});
+</script>
+{% endblock %}

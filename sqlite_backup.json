@@ -1,0 +1,108 @@
+{
+  "department": [
+    {
+      "id": 1,
+      "name": "IT Department",
+      "description": "Information Technology",
+      "created_at": "2026-01-25 07:48:07.422157",
+      "updated_at": "2026-01-25 07:48:07.422182"
+    }
+  ],
+  "user": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password_hash": "pbkdf2:sha256:600000$gjq0eJVKnQJTzXmn$4e42680f8fcd05d65dd4c55a6c3e99777ffd05426fa5563b5eb538194bba7b39",
+      "role": "admin",
+      "name": "Administrator",
+      "email": "admin@example.com",
+      "phone": null,
+      "address": null,
+      "date_of_birth": null,
+      "hire_date": "2026-01-25",
+      "is_active": 1,
+      "created_at": "2026-01-25 07:43:59.854497",
+      "updated_at": "2026-01-25 07:43:59.854506"
+    },
+    {
+      "id": 2,
+      "username": "testemp",
+      "password_hash": "pbkdf2:sha256:600000$4svQQaQ2apPO4TZV$64886d5eb8a5b94e805ebc4610683bbecd553e39e9b0936c19338c067915b528",
+      "role": "employee",
+      "name": "Test Employee",
+      "email": "test@example.com",
+      "phone": null,
+      "address": null,
+      "date_of_birth": null,
+      "hire_date": "2026-01-25",
+      "is_active": 1,
+      "created_at": "2026-01-25 07:48:08.432826",
+      "updated_at": "2026-01-25 07:48:08.432833"
+    },
+    {
+      "id": 3,
+      "username": "testuser_46c860be",
+      "password_hash": "pbkdf2:sha256:600000$00sgPcSPQTVxSYQE$f32e618a16603fde38eb8f28d42456cf60b2e0437ae7a788b56161fae1f4e5ba",
+      "role": "employee",
+      "name": "Test User",
+      "email": "testuser_6e6cb09a@example.com",
+      "phone": null,
+      "address": null,
+      "date_of_birth": null,
+      "hire_date": "2026-01-25",
+      "is_active": 1,
+      "created_at": "2026-01-25 07:53:45.049229",
+      "updated_at": "2026-01-25 07:53:45.049260"
+    }
+  ],
+  "user_departments": [],
+  "employee_details": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "basic_salary": 50000.0,
+      "is_hourly": 0,
+      "hourly_rate": 0.0,
+      "overtime_rate": 0.0,
+      "tax_rate": 0.0,
+      "insurance_deduction": 0.0,
+      "other_deductions": 0.0,
+      "bank_account": null,
+      "bank_name": null,
+      "created_at": "2026-01-25 07:48:08.443427",
+      "updated_at": "2026-01-25 07:48:08.443442"
+    }
+  ],
+  "attendance": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "date": "2026-01-25",
+      "present": 1,
+      "hours_worked": 0.0,
+      "check_in_time": null,
+      "check_out_time": null,
+      "notes": null,
+      "created_at": "2026-01-25 07:48:08.451712",
+      "updated_at": "2026-01-25 07:48:08.451765"
+    }
+  ],
+  "leave": [
+    {
+      "id": 1,
+      "user_id": 2,
+      "leave_type": "sick",
+      "start_date": "2026-01-25",
+      "end_date": "2026-01-26",
+      "days_requested": 1,
+      "reason": null,
+      "status": "pending",
+      "approved_by": null,
+      "approved_at": null,
+      "created_at": "2026-01-25 07:48:08.459886",
+      "updated_at": "2026-01-25 07:48:08.459894"
+    }
+  ],
+  "payroll_record": [],
+  "audit_log": []
+}

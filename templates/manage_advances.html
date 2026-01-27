@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Advances{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Employee Advances</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Amount</th>
+                                    <th>Remaining Balance</th>
+                                    <th>Deduction Type</th>
+                                    <th>Advance Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for advance in advances %}
+                                <tr>
+                                    <td>{{ advance.employee.name }}</td>
+                                    <td>${{ "%.2f"|format(advance.amount) }}</td>
+                                    <td>${{ "%.2f"|format(advance.remaining_balance) }}</td>
+                                    <td>
+                                        {% if advance.deduction_type == 'installments' %}
+                                            Installments (${{ "%.2f"|format(advance.installment_amount) }}/month)
+                                        {% else %}
+                                            Single Deduction
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ advance.advance_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if advance.remaining_balance <= 0 %}
+                                            <span class="badge badge-success">Completed</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('view_advance', advance_id=advance.id) }}" class="btn btn-sm btn-info">View</a>
+                                        <form method="POST" action="{{ url_for('delete_advance', advance_id=advance.id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this advance?')">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Leave Requests - Payroll System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Leave Requests Management</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Leave Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Days</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Requested</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in leaves %}
+                                <tr>
+                                    <td>{{ leave.user.name }}</td>
+                                    <td>{{ leave.leave_type.title() }}</td>
+                                    <td>{{ leave.start_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ leave.end_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ leave.days_requested }}</td>
+                                    <td>{{ leave.reason or 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if leave.status == 'pending' else 'success' if leave.status == 'approved' else 'danger' }}">
+                                            {{ leave.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ leave.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if leave.status == 'pending' %}
+                                            <button class="btn btn-sm btn-success approve-leave" data-leave-id="{{ leave.id }}">Approve</button>
+                                            <button class="btn btn-sm btn-danger reject-leave" data-leave-id="{{ leave.id }}">Reject</button>
+                                        {% else %}
+                                            <em>{{ leave.status.title() }}</em>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Approve leave
+    document.querySelectorAll('.approve-leave').forEach(button => {
+        button.addEventListener('click', function() {
+            const leaveId = this.getAttribute('data-leave-id');
+            if (confirm('Are you sure you want to approve this leave request?')) {
+                fetch(`/admin/leaves/approve/${leaveId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error approving leave: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error approving leave');
+                });
+            }
+        });
+    });
+
+    // Reject leave
+    document.querySelectorAll('.reject-leave').forEach(button => {
+        button.addEventListener('click', function() {
+            const leaveId = this.getAttribute('data-leave-id');
+            if (confirm('Are you sure you want to reject this leave request?')) {
+                fetch(`/admin/leaves/reject/${leaveId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error rejecting leave: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error rejecting leave');
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
