@@ -28,22 +28,20 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Basic Salary</label>
-                                <input type="number" step="0.01" class="form-control" name="basic_salary" value="{{ details.basic_salary if details else 0 }}" required>
+                                <label class="form-label">Daily Rate</label>
+                                <input type="number" step="0.01" class="form-control" name="daily_rate" value="{{ employee.daily_rate or 0 }}" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="is_hourly" name="is_hourly" {% if details and details.is_hourly %}checked{% endif %}>
-                                    <label class="form-check-label" for="is_hourly">Hourly Employee</label>
-                                </div>
+                                <label class="form-label">Phone</label>
+                                <input type="text" class="form-control" name="phone" value="{{ employee.phone or '' }}">
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3" id="hourly-rate-field" style="{% if not (details and details.is_hourly) %}display: none;{% endif %}">
-                        <label class="form-label">Hourly Rate</label>
-                        <input type="number" step="0.01" class="form-control" name="hourly_rate" value="{{ details.hourly_rate if details and details.hourly_rate else 0 }}">
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea class="form-control" name="address">{{ employee.address or '' }}</textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Update Employee</button>
                     <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
