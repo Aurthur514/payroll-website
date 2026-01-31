@@ -15,7 +15,7 @@ class StrategyManager:
             'mean_reversion': MeanReversionStrategy(),
             'trend_following': TrendFollowingStrategy(),
             'rsi_divergence': RSIDivergenceStrategy(),
-            'bollinger_bands': BollingerBandStrategy(),
+            # 'bollinger_bands': BollingerBandStrategy(),
             'sma_crossover': SMACrossoverStrategy()  # Consistent strategy
         }
         self.active_strategy = 'ml_strategy'  # Default

@@ -2,7 +2,7 @@ import time
 import logging
 from api_wrapper import CoinSwitchAPI
 from data_fetcher import DataFetcher
-from strategy_manager import StrategyManager
+from strategy_manager_fixed import StrategyManager
 from decision_maker import DecisionMaker
 from self_updater import SelfUpdater
 import config
@@ -19,7 +19,6 @@ def main():
         print("REAL MONEY WILL BE USED FOR TRADES")
         print("=" * 50)
         print("Press Ctrl+C within 10 seconds to cancel...")
-        import time
         time.sleep(10)
         print("Starting live trading...")
 
@@ -45,9 +44,13 @@ def main():
         print(f"API Key Validation: {validation}")
         logging.info(f"API Key Validation: {validation}")
     except Exception as e:
-        print(f"API Key Validation Failed: {e}")
-        logging.error(f"API Key Validation Failed: {e}")
-        return
+        if LIVE_TRADING:
+            print(f"API Key Validation Failed: {e}")
+            logging.error(f"API Key Validation Failed: {e}")
+            return
+        else:
+            print(f"API Key Validation Failed (running in simulation mode): {e}")
+            logging.warning(f"API Key Validation Failed (simulation mode): {e}")
     strategy_manager = StrategyManager()
     updater = SelfUpdater(strategy_manager, data_fetcher)
     decision_maker = DecisionMaker(api, data_fetcher, strategy_manager, updater, 'ETH/INR')  # Default symbol
